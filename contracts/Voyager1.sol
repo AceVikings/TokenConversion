@@ -14,7 +14,7 @@ contract Voyager1 is Ownable,RaritySigner{
     IERC20 GRAV;
 
     struct tokenInfo{
-        address owner;
+        uint[] tokens;
         uint timestaked;
         uint amount;
     }
@@ -25,7 +25,9 @@ contract Voyager1 is Ownable,RaritySigner{
     address designatedSigner;
 
     mapping(uint=>uint) public tokenRarity;
-    mapping(uint=>tokenInfo) public stakeInfo;
+    mapping(address=>mapping(uint=>tokenInfo)) public stakeInfo;
+    mapping(address=>uint) public voyageId;
+    mapping(address=>uint[]) public userStaked;
 
     bool public Paused;
 
@@ -42,41 +44,47 @@ contract Voyager1 is Ownable,RaritySigner{
         }
     }
 
-    function startVoyage(uint[] memory tokenIds,uint price) external {
+    function startVoyage(uint[][] memory tokenIds,uint[] memory price) external {
+        require(tokenIds.length == price.length,"Length mismatch");
         require(msg.sender == tx.origin,"sender not origin");
-        require(price == 1 || price == 2,"Invalid price");
-        uint amount = tokenIds.length * price * 1 ether;
+        uint length  = tokenIds.length;
+        uint amount = 0;
+        for(uint i=0;i<length;i++){
+            require(price[i] == 1 || price[i] == 2,"Invalid price");
+            voyageId[msg.sender]++;
+            amount += tokenIds[i].length * price[i] * 1 ether;
+            uint inLength = tokenIds[i].length;
+            for(uint j=0;i<inLength;i++){
+                require(PUFF.ownerOf(tokenIds[i][j])==msg.sender,"Not owner");
+            }
+            stakeInfo[msg.sender][voyageId[msg.sender]] = tokenInfo(tokenIds[i],block.timestamp,price[i]);
+        }
+        feeBalance += amount * FEE/100;
         amount += amount * FEE/100;
         require(xGRAV.transferFrom(msg.sender,address(this),amount));
-        feeBalance += tokenIds.length*FEE;
-        uint length = tokenIds.length;
-        for(uint i=0;i<length;i++){
-            require(PUFF.ownerOf(tokenIds[i])==msg.sender,"Not owner");
-            stakeInfo[tokenIds[i]] = tokenInfo(msg.sender,block.timestamp,price);
-        }
     }
 
-    function endVoyage(uint[] memory tokenIds) external {
-        uint length = tokenIds.length;
-        require(length < 60,"Can't end more than 60 puffs");
-        uint Grav;
-        uint xGrav;
-        uint random = uint(vrf());
-        for(uint i=0;i<length;i++){
-            tokenInfo storage currToken = stakeInfo[tokenIds[i]];
-            require(currToken.owner == msg.sender,"Not owner");
-            require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days);
-            if (random % 100 < 5) {
-                Grav += currToken.amount * 1 ether;
-            }
-            else{
-                xGrav += currToken.amount * 1 ether;
-            }
-            PUFF.transferFrom(address(this),msg.sender,tokenIds[i]);
-        }
-        GRAV.transfer(msg.sender,Grav);
-        xGRAV.transfer(msg.sender,xGrav);
-    }
+    // function endVoyage(uint[] memory tokenIds) external {
+    //     uint length = tokenIds.length;
+    //     require(length < 60,"Can't end more than 60 puffs");
+    //     uint Grav;
+    //     uint xGrav;
+    //     uint random = uint(vrf());
+    //     for(uint i=0;i<length;i++){
+    //         tokenInfo storage currToken = stakeInfo[tokenIds[i]];
+    //         require(currToken.owner == msg.sender,"Not owner");
+    //         require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days);
+    //         if (random % 100 < 5) {
+    //             Grav += currToken.amount * 1 ether;
+    //         }
+    //         else{
+    //             xGrav += currToken.amount * 1 ether;
+    //         }
+    //         PUFF.transferFrom(address(this),msg.sender,tokenIds[i]);
+    //     }
+    //     GRAV.transfer(msg.sender,Grav);
+    //     xGRAV.transfer(msg.sender,xGrav);
+    // }
 
     function vrf() private view returns (bytes32 result) {
         uint256[1] memory bn;
@@ -89,6 +97,10 @@ contract Voyager1 is Ownable,RaritySigner{
             result := mload(memPtr)
         }
         return result;
+    }
+
+    function getUserStaked(address _user) external view returns(uint[] memory){
+        return userStaked[_user];
     }
 
     function setPuff(address _puff) external onlyOwner{
@@ -107,8 +119,13 @@ contract Voyager1 is Ownable,RaritySigner{
         Paused = _pause;
     }
 
-    function withdrawGrav() external onlyOwner{
-        GRAV.transfer(msg.sender,GRAV.balanceOf(address(this)));
+    function withdrawGrav(address _to) external onlyOwner{
+        GRAV.transfer(_to,GRAV.balanceOf(address(this)));
     }
 
+    function withdrawxGrav(address _to) external onlyOwner{
+        uint amount = feeBalance;
+        feeBalance = 0;
+        xGRAV.transfer(_to,amount);
+    }
 }
