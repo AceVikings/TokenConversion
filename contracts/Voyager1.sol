@@ -23,6 +23,8 @@ contract Voyager1 is Ownable,RaritySigner{
     uint public feeBalance;
     uint public FEE;
 
+    uint voyageSuccess = 10;
+
     address designatedSigner;
 
     mapping(uint=>uint) public tokenRarity;
@@ -68,7 +70,7 @@ contract Voyager1 is Ownable,RaritySigner{
 
     function endVoyage(uint[] memory voyageIds) external {
         uint length = voyageIds.length;
-        require(length < 60,"Can't end more than 60 puffs");
+        require(length < 60,"Can't end more than 60 batches");
         uint Grav;
         uint xGrav;
         uint random = uint(vrf());
@@ -76,14 +78,18 @@ contract Voyager1 is Ownable,RaritySigner{
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
             require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days);
             uint inLength = currToken.tokens.length;
-            if (random % 100 < 5) {
+            uint rarityBonus;
+            for(uint j=0;i<inLength;i++){
+                rarityBonus += tokenRarity[currToken.tokens[j]];
+                PUFF.transferFrom(address(this),msg.sender,currToken.tokens[j]);
+            }
+            rarityBonus /= inLength;
+            uint bonus = 5*(rarityBonus-558412)/1670760;
+            if (random % 100 < voyageSuccess + bonus) {
                 Grav += currToken.amount * inLength * 1 ether;
             }
             else{
                 xGrav += currToken.amount * inLength * 1 ether;
-            }
-            for(uint j=0;i<inLength;i++){
-                PUFF.transferFrom(address(this),msg.sender,currToken.tokens[j]);
             }
             popSlot(msg.sender, voyageIds[i]);
         }
@@ -139,6 +145,10 @@ contract Voyager1 is Ownable,RaritySigner{
 
     function setGrav(address _grav) external onlyOwner{
         GRAV = IERC20(_grav);
+    }
+
+    function setSuccess(uint _success) external onlyOwner{
+        voyageSuccess = _success;
     }
 
     function pauseContract(bool _pause) external onlyOwner{
