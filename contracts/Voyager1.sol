@@ -25,12 +25,13 @@ contract Voyager1 is Ownable,RaritySigner{
 
     uint voyageSuccess = 10;
 
-    address designatedSigner;
+    address designatedSigner = 0x08042c118719C9889A4aD70bc0D3644fBe288153;
 
     mapping(uint=>uint) public tokenRarity;
     mapping(address=>mapping(uint=>tokenInfo)) public stakeInfo;
     mapping(address=>uint) public voyageId;
     mapping(address=>uint[]) public userStaked;
+    mapping(address=>mapping(uint=>bool)) public result;
 
     bool public Paused;
 
@@ -87,6 +88,7 @@ contract Voyager1 is Ownable,RaritySigner{
             uint bonus = 5*(rarityBonus-558412)/1670760;
             if (random % 100 < voyageSuccess + bonus) {
                 Grav += currToken.amount * inLength * 1 ether;
+                result[msg.sender][voyageIds[i]] = true;
             }
             else{
                 xGrav += currToken.amount * inLength * 1 ether;
