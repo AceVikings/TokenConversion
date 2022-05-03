@@ -91,6 +91,19 @@ contract Voyager1 is Ownable,RaritySigner{
         xGRAV.transfer(msg.sender,xGrav);
     }
 
+    function endEarly(uint[] memory voyageIds) external{
+        uint length = voyageIds.length;
+        for(uint i=0;i<length;i++){
+            tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
+            require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days);
+            uint inLength = currToken.tokens.length;
+            for(uint j=0;i<inLength;i++){
+                PUFF.transferFrom(address(this),msg.sender,currToken.tokens[j]);
+            }
+            popSlot(msg.sender, voyageIds[i]);
+        }
+    }
+
     function popSlot(address _user,uint _id) private {
         uint lastID = userStaked[_user][userStaked[_user].length - 1];
         uint currentPos = stakeInfo[_user][_id].position;
