@@ -27,19 +27,21 @@ contract Voyager1 is Ownable,RaritySigner{
     }
 
     uint public feeBalance;
-    uint public FEE;
+    uint public FEE = 20;
 
     uint voyageSuccess = 10;
 
     address designatedSigner = 0x08042c118719C9889A4aD70bc0D3644fBe288153;
 
     mapping(uint=>uint) public tokenRarity;
-    mapping(address=>mapping(uint=>tokenInfo)) public stakeInfo;
+    mapping(address=>mapping(uint=>tokenInfo)) stakeInfo;
     mapping(address=>uint) public voyageId;
     mapping(address=>uint[]) public userStaked;
     mapping(address=>mapping(uint=>resultInfo)) public result;
 
     bool public Paused;
+
+    event Result(address indexed user,uint indexed voyageId,bool win,uint amountGrav);
 
     constructor(address _puff,address _xgrav,address _grav){
         PUFF = IERC721(_puff);
@@ -64,15 +66,18 @@ contract Voyager1 is Ownable,RaritySigner{
             voyageId[msg.sender]++;
             amount += tokenIds[i].length * price[i] * 1 ether;
             uint inLength = tokenIds[i].length;
-            for(uint j=0;i<inLength;i++){
+            for(uint j=0;j<inLength;j++){
                 require(PUFF.ownerOf(tokenIds[i][j])==msg.sender,"Not owner");
+                PUFF.transferFrom(msg.sender,address(this),tokenIds[i][j]);
             }
-            stakeInfo[msg.sender][voyageId[msg.sender]] = tokenInfo(tokenIds[i],block.timestamp,price[i],userStaked[msg.sender].length);
+            uint[] memory tokenArray = new uint[](inLength);
+            tokenArray = tokenIds[i];
+            stakeInfo[msg.sender][voyageId[msg.sender]] = tokenInfo(tokenArray,block.timestamp,price[i],userStaked[msg.sender].length);
             userStaked[msg.sender].push(voyageId[msg.sender]);
         }
         feeBalance += amount * FEE/100;
         amount += amount * FEE/100;
-        require(xGRAV.transferFrom(msg.sender,address(this),amount));
+        require(xGRAV.transferFrom(msg.sender,address(this),amount),"xGrav transfer failed");
     }
 
     function endVoyage(uint[] memory voyageIds) external {
@@ -110,9 +115,9 @@ contract Voyager1 is Ownable,RaritySigner{
         uint length = voyageIds.length;
         for(uint i=0;i<length;i++){
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
-            require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days);
+            require(block.timestamp - currToken.timestaked <= currToken.amount * 1 days,"Already completed");
             uint inLength = currToken.tokens.length;
-            for(uint j=0;i<inLength;i++){
+            for(uint j=0;j<inLength;j++){
                 PUFF.transferFrom(address(this),msg.sender,currToken.tokens[j]);
             }
             popSlot(msg.sender, voyageIds[i]);
@@ -144,6 +149,10 @@ contract Voyager1 is Ownable,RaritySigner{
         return userStaked[_user];
     }
 
+    function getStakeInfo(address _user,uint _voyageId) external view returns(tokenInfo memory){
+        return stakeInfo[_user][_voyageId];
+    }
+
     function setPuff(address _puff) external onlyOwner{
         PUFF = IERC721(_puff);
     }
@@ -158,6 +167,10 @@ contract Voyager1 is Ownable,RaritySigner{
 
     function setSuccess(uint _success) external onlyOwner{
         voyageSuccess = _success;
+    }
+
+    function setFee(uint _fee) external onlyOwner{
+        FEE = _fee;
     }
 
     function pauseContract(bool _pause) external onlyOwner{
