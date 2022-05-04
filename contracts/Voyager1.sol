@@ -20,6 +20,12 @@ contract Voyager1 is Ownable,RaritySigner{
         uint position;
     }
 
+    struct resultInfo{
+        uint[] tokens;
+        uint amount;
+        bool win;
+    }
+
     uint public feeBalance;
     uint public FEE;
 
@@ -31,7 +37,7 @@ contract Voyager1 is Ownable,RaritySigner{
     mapping(address=>mapping(uint=>tokenInfo)) public stakeInfo;
     mapping(address=>uint) public voyageId;
     mapping(address=>uint[]) public userStaked;
-    mapping(address=>mapping(uint=>bool)) public result;
+    mapping(address=>mapping(uint=>resultInfo)) public result;
 
     bool public Paused;
 
@@ -88,10 +94,11 @@ contract Voyager1 is Ownable,RaritySigner{
             uint bonus = 5*(rarityBonus-558412)/1670760;
             if (random % 100 < voyageSuccess + bonus) {
                 Grav += currToken.amount * inLength * 1 ether;
-                result[msg.sender][voyageIds[i]] = true;
+                result[msg.sender][voyageIds[i]] = resultInfo(currToken.tokens,currToken.amount,true);
             }
             else{
                 xGrav += currToken.amount * inLength * 1 ether;
+                result[msg.sender][voyageIds[i]] = resultInfo(currToken.tokens,currToken.amount,false);
             }
             popSlot(msg.sender, voyageIds[i]);
         }
