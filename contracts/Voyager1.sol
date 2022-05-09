@@ -37,6 +37,7 @@ contract Voyager1 is Ownable,RaritySigner{
     mapping(address=>mapping(uint=>tokenInfo)) stakeInfo;
     mapping(address=>uint) public voyageId;
     mapping(address=>uint[]) public userStaked;
+    mapping(address=>uint[]) public userEnded;
     mapping(address=>mapping(uint=>resultInfo)) public result;
 
     bool public Paused;
@@ -68,6 +69,7 @@ contract Voyager1 is Ownable,RaritySigner{
             uint inLength = tokenIds[i].length;
             for(uint j=0;j<inLength;j++){
                 require(PUFF.ownerOf(tokenIds[i][j])==msg.sender,"Not owner");
+                require(tokenRarity[tokenIds[i][j]]!= 0,"Rarity not set");
                 PUFF.transferFrom(msg.sender,address(this),tokenIds[i][j]);
             }
             uint[] memory tokenArray = new uint[](inLength);
@@ -88,10 +90,10 @@ contract Voyager1 is Ownable,RaritySigner{
         uint random = uint(vrf());
         for(uint i=0;i<length;i++){
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
-            require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days);
+            // require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days);
             uint inLength = currToken.tokens.length;
             uint rarityBonus;
-            for(uint j=0;i<inLength;i++){
+            for(uint j=0;j<inLength;j++){
                 rarityBonus += tokenRarity[currToken.tokens[j]];
                 PUFF.transferFrom(address(this),msg.sender,currToken.tokens[j]);
             }
@@ -106,6 +108,7 @@ contract Voyager1 is Ownable,RaritySigner{
                 result[msg.sender][voyageIds[i]] = resultInfo(currToken.tokens,currToken.amount,false);
             }
             popSlot(msg.sender, voyageIds[i]);
+            userEnded[msg.sender].push(voyageIds[i]);
         }
         GRAV.transfer(msg.sender,Grav);
         xGRAV.transfer(msg.sender,xGrav);
@@ -120,7 +123,9 @@ contract Voyager1 is Ownable,RaritySigner{
             for(uint j=0;j<inLength;j++){
                 PUFF.transferFrom(address(this),msg.sender,currToken.tokens[j]);
             }
+            result[msg.sender][voyageIds[i]] = resultInfo(currToken.tokens,currToken.amount,false);
             popSlot(msg.sender, voyageIds[i]);
+            userEnded[msg.sender].push(voyageIds[i]);
         }
     }
 
@@ -149,8 +154,16 @@ contract Voyager1 is Ownable,RaritySigner{
         return userStaked[_user];
     }
 
+    function getUserEnded(address _user) external view returns(uint){
+        return userEnded[_user].length;
+    }
+
     function getStakeInfo(address _user,uint _voyageId) external view returns(tokenInfo memory){
         return stakeInfo[_user][_voyageId];
+    }
+
+    function getResult(address _user,uint _voyageId) external view returns(resultInfo memory){
+        return result[_user][_voyageId];
     }
 
     function setPuff(address _puff) external onlyOwner{
