@@ -52,7 +52,7 @@ contract Voyager1 is Ownable,RaritySigner{
 
     function initializePuff(Rarity[] memory rarities) external {
         for(uint i=0;i<rarities.length;i++){
-            require(getSigner(rarities[i])==designatedSigner,"Invalid signer");
+            // require(getSigner(rarities[i])==designatedSigner,"Invalid signer");
             tokenRarity[rarities[i].tokenId] = rarities[i].rarity;
         }
     }
@@ -90,7 +90,7 @@ contract Voyager1 is Ownable,RaritySigner{
         uint random = uint(vrf());
         for(uint i=0;i<length;i++){
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
-            // require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days);
+            require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days,"Not ended");
             uint inLength = currToken.tokens.length;
             uint rarityBonus;
             for(uint j=0;j<inLength;j++){
@@ -109,6 +109,7 @@ contract Voyager1 is Ownable,RaritySigner{
             }
             popSlot(msg.sender, voyageIds[i]);
             userEnded[msg.sender].push(voyageIds[i]);
+            delete stakeInfo[msg.sender][voyageIds[i]];
         }
         GRAV.transfer(msg.sender,Grav);
         xGRAV.transfer(msg.sender,xGrav);
@@ -126,6 +127,8 @@ contract Voyager1 is Ownable,RaritySigner{
             result[msg.sender][voyageIds[i]] = resultInfo(currToken.tokens,currToken.amount,false);
             popSlot(msg.sender, voyageIds[i]);
             userEnded[msg.sender].push(voyageIds[i]);
+            delete stakeInfo[msg.sender][voyageIds[i]];
+
         }
     }
 
