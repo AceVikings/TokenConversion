@@ -182,5 +182,27 @@ describe("Quest Contract",function(){
 
     })
 
+    describe("Fail conditions",function(){
+        it("Can't stake someone else's token",async function(){
+            await expect(Voyager.connect(ace).startVoyage([[11,12]],[1])).to.be.revertedWith("Not owner");
+        })
+        it("Amount can't be other than 1 or 2",async function(){
+            await expect(Voyager.startVoyage([[13]],[3])).to.be.revertedWith("Invalid price");
+        })
+        it("Rarity must be set",async function(){
+            await expect(Voyager.startVoyage([[13]],[1])).to.be.revertedWith("Rarity not set");
+        })
+        it("Should not end early if time over",async function(){
+            await expect(Voyager.endEarly([4])).to.be.revertedWith("Already completed");
+        })
+        it("Should not end if time not over",async function(){
+            let tokens = [[1,2]];
+            let price = [1];
+            await Voyager.connect(owner).startVoyage(tokens,price);
+            await expect(Voyager.endVoyage([5])).to.be.revertedWith("Not ended");
+        
+        })
+    })
+
 
 })

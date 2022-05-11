@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/interfaces/IERC721.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./RaritySigner.sol";
-
 contract Voyager1 is Ownable,RaritySigner{
 
     IERC721 PUFF;
@@ -91,6 +90,7 @@ contract Voyager1 is Ownable,RaritySigner{
         for(uint i=0;i<length;i++){
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
             require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days,"Not ended");
+            require(currToken.amount != 0,"Invalid id");
             uint inLength = currToken.tokens.length;
             uint rarityBonus;
             for(uint j=0;j<inLength;j++){
@@ -122,6 +122,7 @@ contract Voyager1 is Ownable,RaritySigner{
         uint length = voyageIds.length;
         for(uint i=0;i<length;i++){
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
+            require(currToken.amount != 0,"Invalid id");
             require(block.timestamp - currToken.timestaked <= currToken.amount * 1 days,"Already completed");
             uint inLength = currToken.tokens.length;
             for(uint j=0;j<inLength;j++){
