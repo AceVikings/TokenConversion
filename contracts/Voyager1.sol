@@ -102,10 +102,13 @@ contract Voyager1 is Ownable,RaritySigner{
             if (random % 100 < voyageSuccess + bonus) {
                 Grav += currToken.amount * inLength * 1 ether;
                 result[msg.sender][voyageIds[i]] = resultInfo(currToken.tokens,currToken.amount,true);
+                emit Result(msg.sender, voyageIds[i], true, currToken.amount);
             }
             else{
                 xGrav += currToken.amount * inLength * 1 ether;
                 result[msg.sender][voyageIds[i]] = resultInfo(currToken.tokens,currToken.amount,false);
+                emit Result(msg.sender, voyageIds[i], false, currToken.amount);
+
             }
             popSlot(msg.sender, voyageIds[i]);
             userEnded[msg.sender].push(voyageIds[i]);
@@ -127,8 +130,8 @@ contract Voyager1 is Ownable,RaritySigner{
             result[msg.sender][voyageIds[i]] = resultInfo(currToken.tokens,currToken.amount,false);
             popSlot(msg.sender, voyageIds[i]);
             userEnded[msg.sender].push(voyageIds[i]);
+            emit Result(msg.sender, voyageIds[i], false, currToken.amount);
             delete stakeInfo[msg.sender][voyageIds[i]];
-
         }
     }
 

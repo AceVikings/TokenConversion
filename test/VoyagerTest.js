@@ -121,7 +121,9 @@ describe("Quest Contract",function(){
 
     describe("End Early",function(){
         it("Should return token to owner",async function(){
-            await Voyager.endEarly([1]);
+            await expect (Voyager.endEarly([1])).to.emit(Voyager,"Result").withArgs(owner.address,1,false,1);
+
+            it("Should emit event")
             for(var i=1;i<=2;i++){
                 expect (await NFT.ownerOf(i)).to.equal(owner.address);
             }
@@ -149,7 +151,7 @@ describe("Quest Contract",function(){
         })
         it("Should return token to owner",async function(){
             await network.provider.send("evm_increaseTime", [24*60*60 + 1])
-            await Voyager.endVoyage([2]);
+            await expect (Voyager.endVoyage([2])).to.emit(Voyager,"Result").withArgs(owner.address,2,true,1);
             for(var i = 3;i<6;i++){
                 expect (await NFT.ownerOf(i)).to.equal(owner.address);
             }
