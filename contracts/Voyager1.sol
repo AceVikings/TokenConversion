@@ -26,7 +26,7 @@ contract Voyager1 is Ownable,RaritySigner{
     }
 
     uint public feeBalance;
-    uint public FEE = 20;
+    uint public FEE = 20; //20 % Fee
 
     uint voyageSuccess = 10;
 
@@ -51,12 +51,13 @@ contract Voyager1 is Ownable,RaritySigner{
 
     function initializePuff(Rarity[] memory rarities) external {
         for(uint i=0;i<rarities.length;i++){
-            // require(getSigner(rarities[i])==designatedSigner,"Invalid signer");
+            require(getSigner(rarities[i])==designatedSigner,"Invalid signer");
             tokenRarity[rarities[i].tokenId] = rarities[i].rarity;
         }
     }
 
     function startVoyage(uint[][] memory tokenIds,uint[] memory price) external {
+        require(!Paused,"Execution paused");
         require(tokenIds.length == price.length,"Length mismatch");
         require(msg.sender == tx.origin,"sender not origin");
         uint length  = tokenIds.length;
@@ -89,7 +90,7 @@ contract Voyager1 is Ownable,RaritySigner{
         uint random = uint(vrf());
         for(uint i=0;i<length;i++){
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
-            // require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days,"Not ended");
+            require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days,"Not ended");
             require(currToken.amount != 0,"Invalid id");
             uint inLength = currToken.tokens.length;
             uint rarityBonus;
