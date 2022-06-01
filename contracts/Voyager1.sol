@@ -89,7 +89,7 @@ contract Voyager1 is Ownable,RaritySigner{
         uint random = uint(vrf());
         for(uint i=0;i<length;i++){
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
-            require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days,"Not ended");
+            // require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days,"Not ended");
             require(currToken.amount != 0,"Invalid id");
             uint inLength = currToken.tokens.length;
             uint rarityBonus;
