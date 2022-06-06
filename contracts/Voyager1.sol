@@ -29,6 +29,7 @@ contract Voyager1 is Ownable,RaritySigner{
     uint public FEE = 20; //20 % Fee
 
     uint voyageSuccess = 10;
+    uint bonus = 5;
 
     address designatedSigner = 0x08042c118719C9889A4aD70bc0D3644fBe288153;
 
@@ -41,6 +42,7 @@ contract Voyager1 is Ownable,RaritySigner{
 
     bool public Paused;
 
+    event VoyageStarted(address indexed user,uint[] tokenIds,uint voyageId,uint price);
     event Result(address indexed user,uint indexed voyageId,bool win,uint amountGrav);
 
     constructor(address _puff,address _xgrav,address _grav){
@@ -64,6 +66,7 @@ contract Voyager1 is Ownable,RaritySigner{
         uint amount = 0;
         for(uint i=0;i<length;i++){
             require(price[i] == 1 || price[i] == 2,"Invalid price");
+            require(tokenIds[i].length > 0,"Can't send no puffs");
             voyageId[msg.sender]++;
             amount += tokenIds[i].length * price[i] * 1 ether;
             uint inLength = tokenIds[i].length;
@@ -76,6 +79,7 @@ contract Voyager1 is Ownable,RaritySigner{
             tokenArray = tokenIds[i];
             stakeInfo[msg.sender][voyageId[msg.sender]] = tokenInfo(tokenArray,block.timestamp,price[i],userStaked[msg.sender].length);
             userStaked[msg.sender].push(voyageId[msg.sender]);
+            emit VoyageStarted(msg.sender, tokenIds[i], voyageId[msg.sender], price[i]);
         }
         feeBalance += amount * FEE/100;
         amount += amount * FEE/100;
@@ -99,8 +103,8 @@ contract Voyager1 is Ownable,RaritySigner{
                 PUFF.transferFrom(address(this),msg.sender,currToken.tokens[j]);
             }
             rarityBonus /= inLength;
-            uint bonus = 5*(rarityBonus-558412)/1670760;
-            if (random % 100 < voyageSuccess + bonus) {
+            uint _bonus = bonus*(rarityBonus-558412)/1670760;
+            if (random % 100 < voyageSuccess + _bonus) {
                 Grav += currToken.amount * inLength * 1 ether;
                 result[msg.sender][voyageIds[i]] = resultInfo(currToken.tokens,currToken.amount,true);
                 emit Result(msg.sender, voyageIds[i], true, currToken.amount);
@@ -188,6 +192,10 @@ contract Voyager1 is Ownable,RaritySigner{
 
     function setSuccess(uint _success) external onlyOwner{
         voyageSuccess = _success;
+    }
+
+    function setBonus(uint _bonus) external onlyOwner{
+        bonus = _bonus;
     }
 
     function setFee(uint _fee) external onlyOwner{
