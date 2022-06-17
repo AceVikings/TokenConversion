@@ -4,7 +4,7 @@ const { BigNumber } = require("ethers");
 const { parseEther, formatEther } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
 
-describe("Quest Contract",function(){
+describe("Voyager Contract",function(){
 
     let NFTFactory;
     let GravFactory;

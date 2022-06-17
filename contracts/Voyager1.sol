@@ -28,8 +28,9 @@ contract Voyager1 is Ownable,RaritySigner{
     uint public feeBalance;
     uint public FEE = 20; //20 % Fee
 
-    uint voyageSuccess = 10;
-    uint bonus = 5;
+    uint public voyageSuccess = 10;
+    uint public bonus = 5;
+    uint public lockTime = 1 days;
 
     address designatedSigner = 0x08042c118719C9889A4aD70bc0D3644fBe288153;
 
@@ -41,6 +42,7 @@ contract Voyager1 is Ownable,RaritySigner{
     mapping(address=>mapping(uint=>resultInfo)) public result;
 
     bool public Paused;
+
 
     event VoyageStarted(address indexed user,uint[] tokenIds,uint voyageId,uint price);
     event Result(address indexed user,uint indexed voyageId,bool win,uint amountGrav);
@@ -94,7 +96,7 @@ contract Voyager1 is Ownable,RaritySigner{
         uint random = uint(vrf());
         for(uint i=0;i<length;i++){
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
-            require(block.timestamp - currToken.timestaked >= currToken.amount * 1 days,"Not ended");
+            require(block.timestamp - currToken.timestaked >= currToken.amount * lockTime,"Not ended");
             require(currToken.amount != 0,"Invalid id");
             uint inLength = currToken.tokens.length;
             uint rarityBonus;
@@ -128,7 +130,7 @@ contract Voyager1 is Ownable,RaritySigner{
         for(uint i=0;i<length;i++){
             tokenInfo storage currToken = stakeInfo[msg.sender][voyageIds[i]];
             require(currToken.amount != 0,"Invalid id");
-            require(block.timestamp - currToken.timestaked <= currToken.amount * 1 days,"Already completed");
+            require(block.timestamp - currToken.timestaked <= currToken.amount * lockTime,"Already completed");
             uint inLength = currToken.tokens.length;
             for(uint j=0;j<inLength;j++){
                 PUFF.transferFrom(address(this),msg.sender,currToken.tokens[j]);
@@ -200,6 +202,10 @@ contract Voyager1 is Ownable,RaritySigner{
 
     function setFee(uint _fee) external onlyOwner{
         FEE = _fee;
+    }
+
+    function setLockTime(uint _time) external onlyOwner{
+        lockTime = _time;
     }
 
     function pauseContract(bool _pause) external onlyOwner{

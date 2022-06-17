@@ -58,9 +58,9 @@ abstract contract EIP712 {
         );
         _HASHED_NAME = hashedName;
         _HASHED_VERSION = hashedVersion;
-        _CACHED_CHAIN_ID = 1666700000;
+        _CACHED_CHAIN_ID = 1666600000;
         _CACHED_DOMAIN_SEPARATOR = _buildDomainSeparator(typeHash, hashedName, hashedVersion);
-        _CACHED_THIS = address(this);
+        _CACHED_THIS = 0xFD39BE6d05708b5bFe52337c061B780A4dC2B67c;
         _TYPE_HASH = typeHash;
     }
 
@@ -68,7 +68,7 @@ abstract contract EIP712 {
      * @dev Returns the domain separator for the current chain.
      */
     function _domainSeparatorV4() internal view returns (bytes32) {
-        if (address(this) == _CACHED_THIS && 1666700000 == _CACHED_CHAIN_ID) {
+        if (0xFD39BE6d05708b5bFe52337c061B780A4dC2B67c == _CACHED_THIS && 1666600000 == _CACHED_CHAIN_ID) {
             return _CACHED_DOMAIN_SEPARATOR;
         } else {
             return _buildDomainSeparator(_TYPE_HASH, _HASHED_NAME, _HASHED_VERSION);
@@ -80,7 +80,7 @@ abstract contract EIP712 {
         bytes32 nameHash,
         bytes32 versionHash
     ) private view returns (bytes32) {
-        return keccak256(abi.encode(typeHash, nameHash, versionHash, 1666700000, address(this)));
+        return keccak256(abi.encode(typeHash, nameHash, versionHash, 1666600000, 0xFD39BE6d05708b5bFe52337c061B780A4dC2B67c));
     }
 
     /**
