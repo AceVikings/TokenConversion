@@ -90,7 +90,7 @@ contract Voyager1 is Ownable,RaritySigner{
 
     function endVoyage(uint[] memory voyageIds) external {
         uint length = voyageIds.length;
-        require(length < 60,"Can't end more than 60 batches");
+        require(length < 65,"Can't end more than 60 batches");
         uint Grav;
         uint xGrav;
         uint random = uint(vrf());
