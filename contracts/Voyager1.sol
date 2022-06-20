@@ -72,6 +72,7 @@ contract Voyager1 is Ownable,RaritySigner{
             voyageId[msg.sender]++;
             amount += tokenIds[i].length * price[i] * 1 ether;
             uint inLength = tokenIds[i].length;
+            require(inLength <= 100,"Voyage size on <= 100 allowed");
             for(uint j=0;j<inLength;j++){
                 require(PUFF.ownerOf(tokenIds[i][j])==msg.sender,"Not owner");
                 require(tokenRarity[tokenIds[i][j]]!= 0,"Rarity not set");
